@@ -2,8 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 import json
 
-url = 'https://quotes.toscrape.com'
-
 def parser(base_url):
     quotes = list()
     authors = list()
@@ -23,14 +21,13 @@ def parser(base_url):
             author = el.find('small', class_='author').text
             author_links = soup.find('a', href=lambda href: href and 'author' in href)['href']
             all_tags = el.find_all('div', class_='tags')
-            
 
             for _ in all_tags:
                 tag_links = _.find_all('a')
                 tags = list()
                 for tag_link in tag_links:
                     tags.append(tag_link.text)
-            print(f"{quote=}\n{author=}\n{author_links=}\n{tags=}\n{BeautifulSoup(requests.get(f'{base_url}/{author_links}').text, 'lxml').find('span', class_='author-born-date').text=}\n{BeautifulSoup(requests.get(f'{base_url}/{author_links}').text, 'lxml').find('span', class_='author-born-location').text}")
+            new_request = BeautifulSoup(requests.get(f'{base_url}/{author_links}').text, 'lxml')
             quotes.append({
                 "tags": tags,
                 "author": author,
@@ -38,8 +35,8 @@ def parser(base_url):
             })
             authors.append({
                 "fullname": author,
-                "born_date": BeautifulSoup(requests.get(f'{base_url}/{author_links}').text, 'lxml').find('span', class_='author-born-date').text,
-                "born_location": BeautifulSoup(requests.get(f'{base_url}/{author_links}').text, 'lxml').find('span', class_='author-born-location').text,
+                "born_date": new_request.find('span', class_='author-born-date').text,
+                "born_location": new_request.find('span', class_='author-born-location').text,
                 "description": quote
             })
         
@@ -47,5 +44,7 @@ def parser(base_url):
         json.dump(quotes, fl, indent=2)
     with open('authors.json', 'w', encoding='utf-8') as fl:
         json.dump(authors, fl, indent=2)
+
+url = 'https://quotes.toscrape.com'
 
 parser(url)
